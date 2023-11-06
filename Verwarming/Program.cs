@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 
 namespace Verwarming
 {
@@ -7,15 +8,15 @@ namespace Verwarming
 
         static void Main(string[] args)
         {
-            decimal defKamerTemp = 15;
-            double defGemetenTemp = 21;
+            decimal defKamerTemp = 21;
+            double defGemetenTemp = 15;
             int defVochtigheid = 80;
             double defBar = 2.5;
 
-            decimal setkamerTemp = 0;
-            double setGemetenTemp = 0;
-            int setVochtigheid = 0;
-            double setBar = 0;
+            decimal setkamerTemp = defKamerTemp;
+            double setGemetenTemp = defGemetenTemp;
+            int setVochtigheid = defVochtigheid;
+            double setBar = defBar;
 
             decimal kamerTemp = defKamerTemp;
             double gemetenTemp = defGemetenTemp;
@@ -33,19 +34,13 @@ namespace Verwarming
 
                 switch (input.ToLower())
                 {
-                    case "setkamertemp":
+                    case "set":
                         setkamerTemp = SetKamerTemperatuur();
                         kamerTemp = setkamerTemp;
-                        break;
-                    case "setgemetentemp":
                         setGemetenTemp = SetGemetenTemp();
                         gemetenTemp = setGemetenTemp;
-                        break;
-                    case "setvochtigheid":
-                        setVochtigheid = SetHumidity();
+                        setVochtigheid = Setvochtigheid();
                         vochtigheid = setVochtigheid;
-                        break;
-                    case "setdruk":
                         setBar = SetDruk();
                         bar = setBar;
                         break;
@@ -53,11 +48,14 @@ namespace Verwarming
                         ShofInfo(setkamerTemp,setGemetenTemp,setVochtigheid,setBar);
                         break;
                     case "run":
-                        Werking(setkamerTemp, kamerTemp, setGemetenTemp,setVochtigheid, bar, gemetenTemp, vochtigheid);
+                        Werking(setkamerTemp, kamerTemp, bar, gemetenTemp, vochtigheid);
                         break;
-                    //case "default":
-                    //    setDefault(defKamerTemp, defGemetenTemp, defVochtigheid, defBar);
-                    //    break;
+                    case "default":
+                        kamerTemp = defKamerTemp;
+                        gemetenTemp = defGemetenTemp;
+                        vochtigheid = defVochtigheid;
+                        bar = defBar;
+                        break;
                     default:
                         ShowError($"The command ' {input} ' is not know by the system.", errorColor);
                         break;
@@ -65,35 +63,42 @@ namespace Verwarming
             }
         }
 
-        private static void Werking(decimal setkamerTemp, decimal kamerTemp, double setGemetenTemp, int setVochtigheid, double Bar, double gemetenTemp, int vochtigheid)
+
+        private static void Werking(decimal setkamerTemp, decimal kamerTemp, double Bar, double gemetenTemp, int vochtigheid)
         {
-            int teller = 0;
-            while ((gemetenTemp + 0.3) < decimal.ToDouble(setkamerTemp))
+            if (Bar <= 3 && Bar > 2)
             {
-                teller = teller + 1;
-                double rest = teller % 2;
-                gemetenTemp = gemetenTemp + 0.2;
-                if (rest == 0)
+                int teller = 0;
+                while (gemetenTemp < (decimal.ToDouble(setkamerTemp) + 0.3))
                 {
-                    vochtigheid = vochtigheid - 1;
+                    teller = teller + 1;
+                    double rest = teller % 2;
+                    if (rest == 0)
+                    {
+                        vochtigheid = vochtigheid - 1;
+                    }
+                    Console.ForegroundColor = ConsoleColor.DarkBlue;
+                    Console.WriteLine($"De huidige waarden zijn: ");
+                    Console.WriteLine($"   Gewenste kamertemperatuur: {kamerTemp}°C / Gemeten kamertemperatuur: {gemetenTemp.ToString("f2")}°C / Vochtigheid: {vochtigheid}% / Ketel druk: {Bar}%");
+                    Console.WriteLine($" ");
+                    gemetenTemp = gemetenTemp + 0.2;
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
-                Console.WriteLine($"De huidige waarden zijn: ");
-                Console.WriteLine($"   Gewenste kamertemperatuur: {kamerTemp}°C");
-                Console.WriteLine($"   Gemeten kamertemperatuur: {gemetenTemp}°C");
-                Console.WriteLine($"   Vochtigheid: {vochtigheid}%");
-                Console.WriteLine($"   Ketel druk: {Bar}%");
-                Console.WriteLine($" ");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"   Gewenste kamertemperatuur: {kamerTemp}°C is bereikt");
+                Console.ForegroundColor = ConsoleColor.White;
             }
+            else
+            {
+                ShowError($" De druk in de ketel is; {Bar}bar, dit is niet binnen de normen (2-3 bar) ");
+            }
+            
         }
 
-        //private static void setDefault(decimal defKamerTemp, double defGemetenTemp, int defVochtigheid, double defBar)
-        //{
-        //    kamerTemp = defKamerTemp;
-        //}
 
         private static void ShofInfo(decimal kamerTemp, double gemetenTemp, int vochtigheid, double bar)
         {
-            Console.WriteLine($"De ingegeven waarden zijn: ");
+            Console.WriteLine($"De ingegeven test waarden zijn: ");
             Console.WriteLine($"   Gewenste kamertemperatuur: {kamerTemp}°C");
             Console.WriteLine($"   Gemeten kamertemperatuur: {gemetenTemp}°C");
             Console.WriteLine($"   Vochtigheid: {vochtigheid}%");
@@ -104,7 +109,7 @@ namespace Verwarming
         {
             while(true)
             {
-                int userInput = GetUserInputAsInt("Geef druk in bar (1-4):", "foute ingave");
+                int userInput = GetUserInputAsInt("Geef druk in bar (1-4)", "foute ingave");
                 if (userInput > 0 && userInput <= 4)
                 {
                     return userInput;
@@ -113,11 +118,11 @@ namespace Verwarming
             }
         }
 
-        private static int SetHumidity()
+        private static int Setvochtigheid()
         {
             while (true)
             {
-                int userInput = GetUserInputAsInt("geef vochtigheid (1-1OO):", "foute ingave");
+                int userInput = GetUserInputAsInt("geef vochtigheid (1-1OO)", "foute ingave");
                 if (userInput > 0 && userInput <= 100)
                 {
                     return userInput;
@@ -130,7 +135,7 @@ namespace Verwarming
         {
             while (true)
             {
-                double userInput = GetUserInputAsDouble("geef een gemeten temperatuur (1-30):", "foute ingave");
+                double userInput = GetUserInputAsDouble("geef een gemeten temperatuur (1-30)", "foute ingave");
                 if (userInput > 0 && userInput <= 30)
                 {
                     return userInput;
@@ -143,7 +148,7 @@ namespace Verwarming
         {
             while (true)
             {
-                decimal userInput = GetUserInputAsDecimal("Geef kamertemperatuur (1-30):", "foute ingave");
+                decimal userInput = GetUserInputAsDecimal("Geef kamertemperatuur (1-30)", "foute ingave");
                 if (userInput > 0 && userInput <= 30)
                 {
                     return userInput;
@@ -170,7 +175,7 @@ namespace Verwarming
         private static double GetUserInputAsDouble(string message, string errorMessage)
         {
             double userInput = 0;
-            Console.WriteLine($"{message}");
+            Console.Write($"{message} : ");
             string input = Console.ReadLine() ?? "";
             if (double.TryParse(input, out userInput))
             {
